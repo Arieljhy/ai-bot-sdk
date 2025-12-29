@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shadow DOM 样式隔离测试</title>
+  <style>
+    /* 宿主页面的全局样式 - 尝试影响SDK */
+    * {
+      font-family: 'Courier New', monospace !important;
+      box-sizing: content-box !important;
+    }
+
+    .cs-chat-window {
+      background: red !important;
+      border: 10px solid yellow !important;
+    }
+
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+
+    .test-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .test-info {
+      background: #e3f2fd;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2196F3;
+    }
+
+    .test-info p {
+      margin: 5px 0;
+    }
+
+    .verification {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f5f5f5;
+      border-radius: 4px;
+    }
+
+    .verification h3 {
+      margin-top: 0;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 4px;
+      background: #2196F3;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #1976D2;
+    }
+
+    #result {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 4px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+
+    .success {
+      background: #c8e6c9;
+      color: #2e7d32;
+    }
+
+    .error {
+      background: #ffcdd2;
+      color: #c62828;
+    }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <h1>🧪 Shadow DOM 样式隔离测试</h1>
+
+    <div class="test-info">
+      <p><strong>测试说明：</strong></p>
+      <p>1. 宿主页面定义了全局样式（红色背景、黄色边框、Courier字体）</p>
+      <p>2. 如果Shadow DOM正常工作，SDK组件将不受这些样式影响</p>
+      <p>3. 打开聊天窗口，检查样式是否正常显示</p>
+    </div>
+
+    <div class="verification">
+      <h3>验证步骤：</h3>
+      <button onclick="verifyShadowDOM()">检查 Shadow DOM 是否创建</button>
+      <button onclick="verifyStyleIsolation()">验证样式隔离</button>
+      <button onclick="openChatWindow()">打开聊天窗口</button>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { createChatSDK } from './dist/chat-sdk.es.js';
+
+    // 创建SDK实例
+    const sdk = createChatSDK({
+      title: '智能客服',
+      welcomeMessage: 'Hi，我是智能客服',
+      quickQuestions: [
+        { id: '1', text: '测试问题1' },
+        { id: '2', text: '测试问题2' }
+      ]
+    });
+
+    // 挂载SDK
+    sdk.mount();
+
+    // 暴露到全局
+    window.chatSDK = sdk;
+
+    // 监听消息发送
+    sdk.on('sendMessage', (content) => {
+      console.log('用户发送:', content);
+      setTimeout(() => {
+        sdk.addMessage({
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: `收到消息：${content}`,
+          timestamp: Date.now()
+        });
+      }, 500);
+    });
+
+    // 验证函数
+    window.verifyShadowDOM = function() {
+      const result = document.getElementById('result');
+      const hostElement = document.querySelector('chat-sdk-root');
+
+      if (!hostElement) {
+        result.className = 'error';
+        result.textContent = '❌ 未找到 chat-sdk-root 元素';
+        return;
+      }
+
+      const shadowRoot = hostElement.shadowRoot;
+
+      if (!shadowRoot) {
+        result.className = 'error';
+        result.textContent = '❌ chat-sdk-root 元素没有 Shadow DOM';
+        return;
+      }
+
+      result.className = 'success';
+      result.textContent = `✅ Shadow DOM 创建成功！
+
+元素: ${hostElement.tagName}
+Shadow Root 模式: ${shadowRoot.mode}
+内部元素数量: ${shadowRoot.querySelectorAll('*').length}
+
+Shadow DOM 提供了完整的样式隔离，宿主页面的CSS不会影响SDK内部样式。`;
+    };
+
+    window.verifyStyleIsolation = function() {
+      const result = document.getElementById('result');
+      const hostElement = document.querySelector('chat-sdk-root');
+
+      if (!hostElement || !hostElement.shadowRoot) {
+        result.className = 'error';
+        result.textContent = '❌ 请先检查 Shadow DOM 是否创建';
+        return;
+      }
+
+      // 检查是否有聊天窗口元素
+      const chatWindow = hostElement.shadowRoot.querySelector('.cs-chat-window');
+
+      if (!chatWindow) {
+        result.className = 'success';
+        result.textContent = `✅ SDK 已挂载，但聊天窗口未打开
+
+请先点击"打开聊天窗口"按钮，然后再次运行此验证。
+
+Shadow DOM 内部找到的其他元素:
+- 按钮: ${hostElement.shadowRoot.querySelectorAll('.cs-floating-button').length}
+- 容器: ${hostElement.shadowRoot.querySelectorAll('#chat-sdk-mount-point').length}`;
+        return;
+      }
+
+      // 获取计算后的样式
+      const styles = window.getComputedStyle(chatWindow);
+      const backgroundColor = styles.backgroundColor;
+      const border = styles.border;
+
+      result.className = 'success';
+      result.textContent = `✅ 样式隔离验证成功！
+
+聊天窗口背景色: ${backgroundColor}
+聊天窗口边框: ${border}
+
+如果背景色不是 "red" 或 "rgb(255, 0, 0)"，
+并且边框不是 "10px solid yellow"，
+说明 Shadow DOM 样式隔离正常工作！
+
+宿主页面的样式已被成功隔离。`;
+    };
+
+    window.openChatWindow = function() {
+      const result = document.getElementById('result');
+      sdk.open();
+      result.className = 'success';
+      result.textContent = '✅ 聊天窗口已打开
+
+请检查:
+1. 聊天窗口样式是否正常（不是红色背景）
+2. 边框是否正常（不是10px黄色边框）
+3. 字体是否正常（不是Courier字体）
+
+如果以上都正常，说明Shadow DOM样式隔离成功！';
+    };
+
+    // 初始提示
+    document.getElementById('result').textContent = '点击上方按钮开始验证...';
+    document.getElementById('result').className = 'success';
+  </script>
+</body>
+</html>

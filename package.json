@@ -1,0 +1,75 @@
+{
+  "name": "ai-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "智能客服SDK - 基于Vue 3的移动端H5智能客服组件",
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "bugs": {
+    "url": ""
+  },
+  "homepage": "",
+  "keywords": [
+    "chatbot",
+    "ai",
+    "sdk",
+    "vue3",
+    "customer-service",
+    "智能客服",
+    "h5",
+    "mobile",
+    "chat"
+  ],
+  "main": "./dist/chat-sdk.umd.js",
+  "module": "./dist/chat-sdk.es.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/chat-sdk.es.js",
+      "require": "./dist/chat-sdk.umd.js"
+    },
+    "./style.css": "./dist/ai-bot.css"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "build:lib": "vue-tsc -b && vite build --mode lib",
+    "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,scss,less,md,json}\""
+  },
+  "dependencies": {
+    "vue": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.4",
+    "@vitejs/plugin-vue": "^6.0.1",
+    "@vue/tsconfig": "^0.8.1",
+    "less": "4.5.1",
+    "prettier": "^3.4.2",
+    "terser": "5.44.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4",
+    "vite-plugin-dts": "^4.5.4",
+    "vue-tsc": "^3.1.4"
+  },
+  "peerDependencies": {
+    "vue": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
