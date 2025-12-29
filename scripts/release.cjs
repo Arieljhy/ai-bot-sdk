@@ -46,13 +46,9 @@ console.log('✓ 已登录\n');
 
 // 3. 发布到 npm
 console.log('发布到 npm...');
-if (!otp) {
-  console.log('⚠️  未提供 OTP，如果需要两步验证会失败');
-  console.log('   使用 --otp=验证码 参数\n');
-}
 
 try {
-  execSync(`npm publish --access public${otp ? ' --otp=' + otp : ''}`, {
+  execSync(`npm publish --access public`, {
     stdio: 'inherit'
   });
   console.log('\n✓ npm 发布成功\n');
