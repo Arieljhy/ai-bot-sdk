@@ -54,11 +54,14 @@
     "prepublishOnly": "npm run build:lib",
     "prepack": "npm run build:lib",
     "version": "node scripts/update-changelog.cjs && git add CHANGELOG.md",
-    "postversion": "git push && git push --tags",
+    "preversion": "npm run build:lib",
     "release": "node scripts/release.cjs patch",
     "release:minor": "node scripts/release.cjs minor",
     "release:major": "node scripts/release.cjs major",
-    "preversion": "npm run build:lib"
+    "prep": "node scripts/prep-release.cjs patch",
+    "prep:minor": "node scripts/prep-release.cjs minor",
+    "prep:major": "node scripts/prep-release.cjs major",
+    "publish": "node scripts/publish.cjs"
   },
   "dependencies": {
     "vue": "^3.0.0"

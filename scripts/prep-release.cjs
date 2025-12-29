@@ -16,15 +16,6 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-// 检查 npm 登录
-console.log('检查 npm 登录状态...');
-try {
-  execSync('npm whoami', { stdio: 'ignore' });
-} catch {
-  console.error('❌ 未登录 npm，请先运行: npm login');
-  process.exit(1);
-}
-
 // 检查工作区
 try {
   const status = execSync('git status --porcelain', { encoding: 'utf-8' });
@@ -39,10 +30,10 @@ try {
 
 // 设置环境变量
 const env = { ...process.env, CHANGELOG_MSG: message };
-console.log(`📦 发布 ${versionType} 版本...${message ? ` (changelog: ${message})` : ''}`);
-
-// 步骤 1: 更新版本号
+console.log(`📦 准备发布 ${versionType} 版本...${message ? ` (changelog: ${message})` : ''}`);
 console.log('  更新版本号并构建...');
+
+// 更新版本号（会自动触发构建和 changelog）
 try {
   execSync(`npm version ${versionType} -m "chore(release): %s"`, {
     stdio: 'inherit',
@@ -53,6 +44,8 @@ try {
   process.exit(1);
 }
 
-console.log('\n⚠️  版本已更新，现在需要发布到 npm');
-console.log('请执行以下命令完成发布:');
-console.log(`  node scripts/publish.cjs --otp=你的验证码`);
+console.log('\n✅ 版本准备完成！');
+console.log('\n下一步操作:');
+console.log('  1. 检查构建产物: ls dist/');
+console.log('  2. 发布到 npm: npm publish --access public --otp=你的验证码');
+console.log('  3. 推送到 git: git push && git push --tags');
