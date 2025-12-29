@@ -1,6 +1,6 @@
 {
   "name": "@ariel_jhy/ai-bot-adk",
-  "version": "1.0.6",
+  "version": "1.0.4",
   "type": "module",
   "description": "智能客服SDK - 基于Vue 3的移动端H5智能客服组件",
   "author": "",
@@ -44,21 +44,13 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "build:lib": "rm -rf dist && npm run build:lib:es && npm run build:lib:umd",
-    "build:lib:es": "vite build --mode lib:es",
-    "build:lib:umd": "vite build --mode lib:umd",
-    "preview": "vite preview",
-    "type-check": "vue-tsc --noEmit",
+    "build:lib": "rm -rf dist && vite build --mode lib:es && vite build --mode lib:umd",
     "format": "prettier --write \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
     "prepublishOnly": "npm run build:lib",
     "prepack": "npm run build:lib",
-    "preversion": "npm run build:lib",
     "release": "node scripts/release.cjs",
     "publish:npm": "node scripts/publish.cjs",
-    "prep": "node scripts/prep-release.cjs patch",
-    "prep:minor": "node scripts/prep-release.cjs minor",
-    "prep:major": "node scripts/prep-release.cjs major"
+    "prep": "node scripts/prep-release.cjs"
   },
   "dependencies": {
     "vue": "^3.0.0"

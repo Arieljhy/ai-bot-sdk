@@ -7,5 +7,5 @@ export interface ChatSDKExports {
   default: typeof import('./core/ChatSDK').ChatSDK
 }
 
-declare const sdk: ChatSDKExports
+declare const sdk: ChatSDKExports;
 export default sdk
