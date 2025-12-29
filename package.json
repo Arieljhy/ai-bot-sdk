@@ -53,15 +53,12 @@
     "format:check": "prettier --check \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
     "prepublishOnly": "npm run build:lib",
     "prepack": "npm run build:lib",
-    "version": "node scripts/update-changelog.cjs && git add CHANGELOG.md",
+    "version": "node scripts/update-changelog.cjs && git add .",
     "preversion": "npm run build:lib",
-    "release": "node scripts/release.cjs patch",
-    "release:minor": "node scripts/release.cjs minor",
-    "release:major": "node scripts/release.cjs major",
+    "release": "node scripts/release.cjs",
     "prep": "node scripts/prep-release.cjs patch",
     "prep:minor": "node scripts/prep-release.cjs minor",
-    "prep:major": "node scripts/prep-release.cjs major",
-    "publish": "node scripts/publish.cjs"
+    "prep:major": "node scripts/prep-release.cjs major"
   },
   "dependencies": {
     "vue": "^3.0.0"
