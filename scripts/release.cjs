@@ -4,14 +4,11 @@ const path = require('path');
 
 // 解析参数
 const args = process.argv.slice(2);
-let otp = '';
 let message = '';
 
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
-  if (arg === '--otp') {
-    otp = args[++i] || '';
-  } else if (arg === '-m' || arg === '--message') {
+  if (arg === '-m' || arg === '--message') {
     message = args[++i] || '';
   } else if (!arg.startsWith('-')) {
     message = arg;
@@ -82,27 +79,6 @@ console.log('推送到远程...');
 execSync(`git push && git push origin v${version}`, { stdio: 'inherit' });
 console.log('✓ 推送成功\n');
 
-// 6. 发布到 npm
-console.log('发布到 npm...');
-if (!otp) {
-  console.log('⚠️  未提供 OTP，如果需要两步验证会失败');
-  console.log('   使用 --otp=验证码 参数\n');
-}
-
-try {
-  execSync(`npm publish --access public${otp ? ' --otp=' + otp : ''}`, {
-    stdio: 'inherit'
-  });
-  console.log('\n✅ 发布成功！');
-} catch (error) {
-  console.error('\n❌ npm 发布失败');
-  console.log('\n如需删除 tag，请执行:');
-  console.log(`  git reset --hard HEAD~1 && git tag -d v${version} && git push origin :refs/tags/v${version}`);
-  process.exit(1);
-}
-
 console.log(`\n✅ 版本 ${version} 发布完成！`);
-console.log(`\n📦 包信息:`);
-console.log(`  名称: @ariel_jhy/ai-bot-adk`);
-console.log(`  版本: ${version}`);
-console.log(`  链接: https://www.npmjs.com/package/@ariel_jhy/ai-bot-adk\n`);
+console.log(`\n📦 下一步，手动发布到 npm:`);
+console.log(`  npm publish --access public --otp=你的验证码\n`);

@@ -55,6 +55,7 @@
     "prepack": "npm run build:lib",
     "preversion": "npm run build:lib",
     "release": "node scripts/release.cjs",
+    "publish:npm": "node scripts/publish.cjs",
     "prep": "node scripts/prep-release.cjs patch",
     "prep:minor": "node scripts/prep-release.cjs minor",
     "prep:major": "node scripts/prep-release.cjs major"
