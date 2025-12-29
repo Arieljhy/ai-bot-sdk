@@ -1,11 +1,33 @@
-export { ChatSDK } from './core/ChatSDK'
-export { createChatSDK } from './index'
+import type { ChatSDKConfig } from './types'
 
-export interface ChatSDKExports {
-  ChatSDK: typeof import('./core/ChatSDK').ChatSDK
-  createChatSDK: (config?: import('./core/ChatSDK').ChatSDKConfig) => import('./core/ChatSDK').ChatSDK
-  default: typeof import('./core/ChatSDK').ChatSDK
+/**
+ * ChatSDK 类
+ */
+export class ChatSDK {
+  constructor(config?: ChatSDKConfig)
+  mount(selector?: string | HTMLElement): void
+  unmount(): void
+  open(): void
+  close(): void
+  toggle(): void
+  sendMessage(content: string): Promise<void>
+  addMessage(message: import('./types').ChatMessage): void
+  appendMessageContent(messageId: string, content: string): void
+  finishMessageStream(messageId: string): void
+  clearMessages(): void
+  on(event: string, callback: Function): void
+  off(event: string, callback: Function): void
+  updateConfig(config: Partial<ChatSDKConfig>): void
 }
 
-declare const sdk: ChatSDKExports;
-export default sdk
+/**
+ * 创建SDK实例的便捷函数
+ */
+export declare function createChatSDK(config?: ChatSDKConfig): ChatSDK
+
+export type { ChatSDKConfig, ChatMessage, QuickQuestion } from './types'
+
+/**
+ * 默认导出
+ */
+export default ChatSDK
