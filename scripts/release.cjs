@@ -45,18 +45,44 @@ try {
   }
 } catch {}
 
-// 3. 创建 tag
+// 3. 更新 CHANGELOG.md
+console.log('更新 CHANGELOG.md...');
+if (message) {
+  console.log(`  变更内容: ${message}`);
+} else {
+  console.log('  ⚠️  未指定变更内容，将创建"待更新"条目');
+  console.log('  使用 -m "内容" 参数指定变更');
+}
+
+try {
+  // 设置环境变量并执行更新脚本
+  const env = { ...process.env, CHANGELOG_MSG: message };
+  execSync('node scripts/update-changelog.cjs', {
+    stdio: 'inherit',
+    env
+  });
+
+  // 提交 CHANGELOG.md
+  execSync('git add CHANGELOG.md', { stdio: 'inherit' });
+  execSync(`git commit -m "docs: 更新 CHANGELOG to ${version}"`, { stdio: 'inherit' });
+  console.log('✓ CHANGELOG.md 已更新并提交\n');
+} catch (error) {
+  console.error('❌ 更新 CHANGELOG.md 失败');
+  process.exit(1);
+}
+
+// 4. 创建 tag
 console.log(`创建 tag v${version}...`);
-const commitMsg = message ? `chore(release): ${version}\n\n${message}` : `chore(release): ${version}`;
-execSync(`git tag -a v${version} -m "${commitMsg}"`, { stdio: 'inherit' });
+const tagMsg = message ? `Release v${version}\n\n${message}` : `Release v${version}`;
+execSync(`git tag -a v${version} -m "${tagMsg}"`, { stdio: 'inherit' });
 console.log('✓ Tag 创建成功\n');
 
-// 4. 推送 tag
-console.log('推送 tag 到远程...');
-execSync(`git push origin v${version}`, { stdio: 'inherit' });
-console.log('✓ Tag 推送成功\n');
+// 5. 推送提交和 tag
+console.log('推送到远程...');
+execSync(`git push && git push origin v${version}`, { stdio: 'inherit' });
+console.log('✓ 推送成功\n');
 
-// 5. 发布到 npm
+// 6. 发布到 npm
 console.log('发布到 npm...');
 if (!otp) {
   console.log('⚠️  未提供 OTP，如果需要两步验证会失败');
@@ -71,7 +97,7 @@ try {
 } catch (error) {
   console.error('\n❌ npm 发布失败');
   console.log('\n如需删除 tag，请执行:');
-  console.log(`  git tag -d v${version} && git push origin :refs/tags/v${version}`);
+  console.log(`  git reset --hard HEAD~1 && git tag -d v${version} && git push origin :refs/tags/v${version}`);
   process.exit(1);
 }
 
