@@ -203,33 +203,36 @@ export class ChatSDK {
   private injectComponentStyles() {
     if (!this.shadowRoot) return
 
-    const componentStyle = document.createElement('style')
-    componentStyle.setAttribute('data-chat-sdk-styles', 'true')
+    // 检测是否为开发环境
+    const isDev = import.meta.env?.DEV ?? false
 
-    // 使用内联的CSS样式
-    if (COMPONENT_STYLES && !COMPONENT_STYLES.includes('请在构建时自动注入')) {
-      componentStyle.textContent = COMPONENT_STYLES
-      this.shadowRoot.appendChild(componentStyle)
-      console.log('[ChatSDK] Injected component styles')
-    } else {
-      // 开发模式：从主文档复制样式
+    // 开发环境：从主文档复制 Vite 注入的样式，并移除 scoped 选择器
+    if (isDev) {
       const allStyles = Array.from(document.querySelectorAll('style'))
-      allStyles.forEach(styleTag => {
-        const content = styleTag.textContent || ''
-        // 检查是否包含 SDK 组件的样式（以 cs- 开头的类名）
-        if (content.includes('.cs-') || content.includes('.chat-sdk')) {
-          // 避免重复添加
-          const existingId = styleTag.getAttribute('data-vite-dev-id')
-          const alreadyInjected = Array.from(this.shadowRoot!.querySelectorAll('style'))
-            .some(s => s.getAttribute('data-vite-dev-id') === existingId)
 
-          if (!alreadyInjected) {
-            const clonedStyle = styleTag.cloneNode(true)
-            this.shadowRoot!.appendChild(clonedStyle)
-            console.log('[ChatSDK] Injected component style:', existingId || 'unknown')
-          }
+      allStyles.forEach(styleTag => {
+        const viteDevId = styleTag.getAttribute('data-vite-dev-id')
+        if (viteDevId && !this.shadowRoot!.querySelector(`[data-vite-dev-id="${viteDevId}"]`)) {
+          // 移除 scoped 属性选择器和类名
+          let content = styleTag.textContent || ''
+          content = content.replace(/\s*\[data-v-[a-f0-9]+\]/g, '')
+          content = content.replace(/\.data-v-[a-f0-9]+/g, '')
+
+          const newStyle = document.createElement('style')
+          newStyle.setAttribute('data-vite-dev-id', viteDevId)
+          newStyle.textContent = content
+          this.shadowRoot!.appendChild(newStyle)
         }
       })
+
+      return
+    }
+
+    // 生产环境：使用内联的CSS样式
+    if (COMPONENT_STYLES && !COMPONENT_STYLES.includes('请在构建时自动注入')) {
+      const style = document.createElement('style')
+      style.textContent = COMPONENT_STYLES
+      this.shadowRoot.appendChild(style)
     }
   }
 

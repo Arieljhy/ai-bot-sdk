@@ -54,9 +54,9 @@ import WelcomeSection from './WelcomeSection.vue'
 import MessagesList from './MessagesList.vue'
 import MessageInput from './MessageInput.vue'
 import QuickQuestions from './QuickQuestions.vue'
-import { useQuickQuestions } from '../composables/useQuickQuestions'
-import { useStreamingChat } from '../composables/useStreamingChat'
-import { useScrollPosition } from '../composables/useScrollPosition'
+import { useQuickQuestions } from '../hooks/useQuickQuestions'
+import { useStreamingChat } from '../hooks/useStreamingChat'
+import { useScrollPosition } from '../hooks/useScrollPosition'
 import type { ChatSDKConfig, ChatMessage, QuickQuestion } from '../types'
 
 interface Props {
