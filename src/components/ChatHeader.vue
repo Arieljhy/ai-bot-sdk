@@ -49,7 +49,7 @@ defineEmits<{
 }>()
 </script>
 
-<style lang="less">
+<style scoped lang="less">
 @import '../styles/variables.less';
 
 .cs-header {

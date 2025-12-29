@@ -1,0 +1,23 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@koa/cors": "^5.0.0",
+    "@koa/router": "^14.0.0",
+    "express": "^5.2.1",
+    "koa": "^3.1.1",
+    "koa-bodyparser": "^4.4.1",
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "openai": "^6.15.0"
+  }
+}

@@ -88,7 +88,7 @@ const handleFeedback = (type: 'like' | 'dislike') => {
 }
 </script>
 
-<style lang="less">
+<style scoped lang="less">
 @import '../styles/variables.less';
 
 .cs-message-item {

@@ -1,5 +1,5 @@
 import { createApp, ref, reactive } from 'vue'
-import SDKApp from './SDKApp.vue'
+import main from './main.vue'
 import type { ChatSDKConfig, ChatMessage, QuickQuestion } from './types'
 import { generateId, deepMerge } from './utils'
 
@@ -78,7 +78,7 @@ export class ChatSDK {
     this.shadowRoot.appendChild(mountPoint)
 
     // 创建Vue应用并挂载到 Shadow DOM 内部
-    this.app = createApp(SDKApp, {
+    this.app = createApp(main, {
       sdk: this,
     })
 
@@ -390,6 +390,32 @@ export class ChatSDK {
       this.saveHistory()
       this.emit('feedback', message)
     }
+  }
+
+  /**
+   * 处理流式消息完成（由组件内部调用）
+   */
+  handleStreamingComplete(messageId: string, content: string) {
+    // 检查消息是否已存在
+    const existingMessage = this.messages.value.find(m => m.id === messageId)
+
+    if (existingMessage) {
+      // 更新现有消息
+      existingMessage.content = content
+      existingMessage.isStreaming = false
+      existingMessage.timestamp = Date.now()
+    } else {
+      // 添加新消息
+      this.addMessage({
+        id: messageId,
+        role: 'assistant',
+        content,
+        isStreaming: false,
+        timestamp: Date.now(),
+      })
+    }
+
+    this.saveHistory()
   }
 
   /**

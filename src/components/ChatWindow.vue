@@ -10,33 +10,30 @@
 
       <!-- 消息区域 -->
       <div class="cs-messages-container" ref="messagesContainer">
-        <!-- 欢迎消息和推荐问题 -->
+        <!-- 欢迎消息和推荐问题 - 始终显示 -->
         <WelcomeSection
-          v-if="messages.length === 0"
           :welcome-message="config.welcomeMessage || 'Hi，我是智能客服'"
           :quick-questions="displayedQuestions"
+          :show-welcome="messages.length === 0"
           @ask-question="handleAskQuestion"
           @refresh-questions="handleRefreshQuestions"
         />
 
         <!-- 消息列表 -->
-        <div v-else class="cs-messages-list">
-          <MessageItem
-            v-for="message in messages"
-            :key="message.id"
-            :message="message"
-            :avatar="
-              message.role === 'assistant' ? config.avatar?.assistant : config.avatar?.user
-            "
-            @feedback="handleFeedback"
-          />
-        </div>
+        <MessagesList
+          v-if="messages.length > 0"
+          :messages="messages"
+          :config="config"
+          :streaming-message-id="streamingMessageId"
+          :streaming-content="streamingContent"
+          @feedback="handleFeedback"
+        />
       </div>
 
       <!-- 推荐问题 (有消息时显示在输入框上方) -->
       <QuickQuestions
         v-if="messages.length > 0"
-        :quick-questions="displayedQuestions"
+        :quick-questions="allQuickQuestions"
         @ask-question="handleAskQuestion"
       />
 
@@ -51,12 +48,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
 import ChatHeader from './ChatHeader.vue'
 import WelcomeSection from './WelcomeSection.vue'
-import MessageItem from './MessageItem.vue'
+import MessagesList from './MessagesList.vue'
 import MessageInput from './MessageInput.vue'
 import QuickQuestions from './QuickQuestions.vue'
+import { useQuickQuestions } from '../composables/useQuickQuestions'
+import { useStreamingChat } from '../composables/useStreamingChat'
+import { useScrollPosition } from '../composables/useScrollPosition'
 import type { ChatSDKConfig, ChatMessage, QuickQuestion } from '../types'
 
 interface Props {
@@ -75,12 +75,8 @@ const emit = defineEmits<{
   sendMessage: [content: string]
   askQuestion: [question: QuickQuestion]
   feedback: [messageId: string, type: 'like' | 'dislike' | null]
+  streamingComplete: [messageId: string, content: string]
 }>()
-
-const messagesContainer = ref<HTMLElement>()
-const displayedQuestions = ref<QuickQuestion[]>([])
-const allQuestionSets = ref<QuickQuestion[][]>([])
-const currentSetIndex = ref(0)
 
 // 获取位置配置
 const position = computed(() => props.config.position || 'right')
@@ -90,33 +86,65 @@ const slideDirection = computed(() => {
   return position.value === 'left' ? 'slide-left' : 'slide-right'
 })
 
-// 初始化推荐问题
-const initializeQuestions = () => {
-  const questions = props.config.quickQuestions || []
+// 消息容器引用
+const messagesContainer = ref<HTMLElement>()
 
-  // 显示所有推荐问题（横向滚动）
-  displayedQuestions.value = questions.length > 0 ? questions : getDefaultQuestions()
-}
+// 推荐问题管理
+const {
+  displayedQuestions,
+  allQuickQuestions,
+  refreshQuestions,
+} = useQuickQuestions(props.config.quickQuestions || [])
 
-// 默认推荐问题
-const getDefaultQuestions = (): QuickQuestion[] => {
-  return [
-    { id: '1', text: '如何使用这个平台？' },
-    { id: '2', text: '账号如何注册？' },
-    { id: '3', text: '忘记密码怎么办？' },
-    { id: '4', text: '如何联系人工客服？' },
-  ]
-}
+// 流式聊天管理
+const {
+  streamingMessageId,
+  streamingContent,
+  startStreamingChat,
+} = useStreamingChat(props.config)
 
-// 刷新推荐问题
+// 滚动位置管理
+const {
+  saveScrollPosition,
+  restoreScrollPosition,
+  resetScrollPosition,
+  scrollToBottom,
+  watchStreamingContent,
+} = useScrollPosition(messagesContainer, streamingContent)
+
+// 监听流式内容变化，自动滚动到底部
+watchStreamingContent()
+
+// 监听消息变化，自动滚动到底部
+watch(() => props.messages, scrollToBottom, { deep: true })
+
+// 监听窗口打开/关闭，保存和恢复滚动位置
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen) {
+    // 窗口打开时恢复滚动位置
+    restoreScrollPosition()
+  }
+})
+
+// 初始化
+onMounted(() => {
+  // 初始化推荐问题已在 useQuickQuestions 中处理
+})
+
+// 刷新推荐问题（换一换）
 const handleRefreshQuestions = () => {
-  currentSetIndex.value = (currentSetIndex.value + 1) % allQuestionSets.value.length
-  displayedQuestions.value = allQuestionSets.value[currentSetIndex.value] ?? []
+  refreshQuestions()
 }
 
 // 处理提问
 const handleAskQuestion = (question: QuickQuestion) => {
   emit('askQuestion', question)
+  startStreamingChat(question.text, {
+    onComplete: (messageId, content) => {
+      emit('streamingComplete', messageId, content)
+      resetScrollPosition()
+    }
+  })
 }
 
 // 处理点赞点踩
@@ -127,31 +155,23 @@ const handleFeedback = (messageId: string, type: 'like' | 'dislike' | null) => {
 // 处理发送消息
 const handleSendMessage = (content: string) => {
   emit('sendMessage', content)
-}
-
-// 处理关闭
-const handleClose = () => {
-  emit('close')
-}
-
-// 滚动到底部
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  startStreamingChat(content, {
+    onComplete: (messageId, content) => {
+      emit('streamingComplete', messageId, content)
+      resetScrollPosition()
     }
   })
 }
 
-// 监听消息变化，自动滚动到底部
-watch(() => props.messages, scrollToBottom, { deep: true })
-
-onMounted(() => {
-  initializeQuestions()
-})
+// 处理关闭
+const handleClose = () => {
+  // 保存当前滚动位置
+  saveScrollPosition()
+  emit('close')
+}
 </script>
 
-<style lang="less">
+<style scoped lang="less">
 @import '../styles/variables.less';
 
 // 通用聊天窗口样式

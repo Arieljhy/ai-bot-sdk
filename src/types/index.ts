@@ -27,6 +27,10 @@ export interface ChatSDKConfig {
   apiBaseUrl?: string
   apiEndpoint?: string
 
+  // SSE 流式接口配置
+  sseUrl?: string
+  sseMethod?: 'GET' | 'POST'
+
   // UI 配置
   title?: string
   placeholder?: string

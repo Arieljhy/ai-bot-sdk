@@ -9,6 +9,7 @@
     @send-message="sdk.handleSendMessage($event)"
     @ask-question="sdk.handleAskQuestion($event)"
     @feedback="(messageId, type) => sdk.handleFeedback({ messageId, type })"
+    @streaming-complete="(messageId, content) => sdk.handleStreamingComplete(messageId, content)"
   />
 </template>
 

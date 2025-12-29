@@ -48,15 +48,18 @@ const inputRef = ref<HTMLInputElement>()
 const canSend = computed(() => inputValue.value.trim().length > 0)
 
 const handleInput = () => {
-  // 可以在这里添加输入逻辑
+  // 输入逻辑
 }
 
 const handleSend = () => {
-  const content = inputValue.value.trim()
-  if (content && !props.disabled) {
-    emit('send', content)
-    inputValue.value = ''
-  }
+  const text = inputValue.value.trim()
+  if (!text) return
+
+  // 清空输入框
+  inputValue.value = ''
+
+  // 发送消息事件
+  emit('send', text)
 }
 
 // 暴露 focus 方法
@@ -66,12 +69,13 @@ const focus = () => {
   })
 }
 
+// 暴露给父组件
 defineExpose({
-  focus,
+  focus
 })
 </script>
 
-<style lang="less">
+<style scoped lang="less">
 @import '../styles/variables.less';
 
 .cs-input-container {
