@@ -32,15 +32,27 @@ try {
 const env = { ...process.env, CHANGELOG_MSG: message };
 console.log(`📦 准备发布 ${versionType} 版本...${message ? ` (changelog: ${message})` : ''}\n`);
 
-// 更新版本号（会自动触发构建和 changelog）
+// 更新版本号（不创建 git tag，由 release 脚本统一创建）
 console.log('更新版本号并构建...');
 try {
-  execSync(`npm version ${versionType} -m "chore(release): %s"`, {
+  execSync(`npm version ${versionType} --no-git-tag-version`, {
     stdio: 'inherit',
     env
   });
 } catch (error) {
   console.error('❌ 版本更新失败');
+  process.exit(1);
+}
+
+// 提交版本变更
+console.log('提交版本变更...');
+try {
+  execSync('git add package.json', { stdio: 'inherit' });
+  execSync(`git commit -m "chore(release): bump version to ${require('../package.json').version}"`, {
+    stdio: 'inherit'
+  });
+} catch (error) {
+  console.error('❌ 提交版本变更失败');
   process.exit(1);
 }
 

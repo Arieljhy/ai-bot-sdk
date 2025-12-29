@@ -34,18 +34,7 @@ if (status.trim()) {
 }
 console.log('✓ 工作区干净\n');
 
-// 2. 检查 tag 是否已存在
-try {
-  const tags = execSync(`git tag -l "v${version}"`, { encoding: 'utf-8' });
-  if (tags.trim()) {
-    console.error(`❌ Tag v${version} 已存在`);
-    console.log('\n如需重新发布，请先删除现有 tag:');
-    console.log(`  git tag -d v${version} && git push origin :refs/tags/v${version}`);
-    process.exit(1);
-  }
-} catch {}
-
-// 3. 检查 npm 登录
+// 2. 检查 npm 登录
 console.log('检查 npm 登录状态...');
 try {
   execSync('npm whoami', { stdio: 'ignore' });
@@ -55,7 +44,7 @@ try {
 }
 console.log('✓ 已登录\n');
 
-// 4. 发布到 npm
+// 3. 发布到 npm
 console.log('发布到 npm...');
 if (!otp) {
   console.log('⚠️  未提供 OTP，如果需要两步验证会失败');
@@ -72,7 +61,7 @@ try {
   process.exit(1);
 }
 
-// 5. 更新 CHANGELOG.md
+// 4. 更新 CHANGELOG.md
 console.log('更新 CHANGELOG.md...');
 if (message) {
   console.log(`  变更内容: ${message}`);
@@ -98,13 +87,13 @@ try {
   process.exit(1);
 }
 
-// 6. 创建 tag
+// 5. 创建 tag
 console.log(`创建 tag v${version}...`);
 const tagMsg = message ? `Release v${version}\n\n${message}` : `Release v${version}`;
 execSync(`git tag -a v${version} -m "${tagMsg}"`, { stdio: 'inherit' });
 console.log('✓ Tag 创建成功\n');
 
-// 7. 推送提交和 tag
+// 6. 推送提交和 tag
 console.log('推送到远程...');
 execSync(`git push && git push origin v${version}`, { stdio: 'inherit' });
 console.log('✓ 推送成功\n');
