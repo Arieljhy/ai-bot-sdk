@@ -1,6 +1,5 @@
 export { ChatSDK } from './core/ChatSDK'
 export { createChatSDK } from './index'
-export type { ChatSDKConfig } from './core/ChatSDK'
 
 export interface ChatSDKExports {
   ChatSDK: typeof import('./core/ChatSDK').ChatSDK
