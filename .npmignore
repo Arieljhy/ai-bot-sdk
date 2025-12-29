@@ -1,0 +1,76 @@
+# 源代码
+src/
+*.ts
+*.vue
+!dist/**/*.d.ts
+
+# 开发配置
+vite.config.ts
+tsconfig.json
+tsconfig.node.json
+.prettierrc*
+.prettierignore
+.eslintrc*
+
+# 开发依赖
+node_modules/
+node-server/
+
+# 文档和示例（已在 package.json 中指定需要的）
+demo/
+index.html
+public/
+*.md
+!README.md
+!CHANGELOG.md
+PUBLISH.md
+BUILD.md
+CONTRIBUTING.md
+*.SVG_DEBUG_GUIDE.md
+*.FLOATING_BUTTON_*.md
+*.POSITION_CONFIG.md
+*.SCOPED_STYLE_FIX.md
+*.STYLE_FIXES.md
+*.Z_INDEX_FIX.md
+*.COMPONENT_STYLE_INJECTION.md
+
+# 构建缓存
+.vite/
+.cache/
+dist/.gitignore
+
+# Git
+.git/
+.gitignore
+.modules.yaml
+.package-lock.json
+.pnpm-workspace-state-v1.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 测试文件
+**/*.test.ts
+**/*.spec.ts
+__tests__/
+coverage/
+
+# 日志
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 临时文件
+tmp/
+temp/
+*.tmp

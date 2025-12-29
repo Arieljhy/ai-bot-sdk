@@ -1,5 +1,5 @@
 import { ref, watch } from 'vue'
-import { useSSE } from '../hooks/useSSE'
+import { useSSE } from './useSSE'
 import type { ChatSDKConfig } from '../types'
 
 interface StreamingChatOptions {

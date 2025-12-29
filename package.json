@@ -1,6 +1,6 @@
 {
-  "name": "ai-bot",
-  "version": "1.0.0",
+  "name": "@ariel_jhy/ai-bot-adk",
+  "version": "1.0.3",
   "type": "module",
   "description": "智能客服SDK - 基于Vue 3的移动端H5智能客服组件",
   "author": "",
@@ -33,7 +33,7 @@
       "import": "./dist/chat-sdk.es.js",
       "require": "./dist/chat-sdk.umd.js"
     },
-    "./style.css": "./dist/ai-bot.css"
+    "./style.css": "./dist/ai-bot-adk.css"
   },
   "files": [
     "dist",
@@ -44,11 +44,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "build:lib": "vue-tsc -b && vite build --mode lib",
+    "build:lib": "rm -rf dist && npm run build:lib:es && npm run build:lib:umd",
+    "build:lib:es": "vite build --mode lib:es",
+    "build:lib:umd": "vite build --mode lib:umd",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,vue,css,scss,less,md,json}\""
+    "format:check": "prettier --check \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
+    "prepublishOnly": "npm run build:lib",
+    "prepack": "npm run build:lib",
+    "version": "node scripts/update-changelog.cjs && git add CHANGELOG.md",
+    "postversion": "git push && git push --tags",
+    "release": "node scripts/release.cjs patch",
+    "release:minor": "node scripts/release.cjs minor",
+    "release:major": "node scripts/release.cjs major",
+    "preversion": "npm run build:lib"
   },
   "dependencies": {
     "vue": "^3.0.0"

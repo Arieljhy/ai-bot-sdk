@@ -15,8 +15,8 @@
 
 <script setup lang="ts">
 import type { PropType } from 'vue'
-import ChatWindow from './components/ChatWindow.vue'
-import type { ChatSDK } from './index'
+import ChatWindow from './ChatWindow.vue'
+import type { ChatSDK } from '../core/ChatSDK'
 
 defineProps({
   sdk: {

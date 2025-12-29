@@ -2,7 +2,42 @@
 
 本项目的所有重要更改都将记录在此文件中。
 
-## [1.0.0] - 2024-12-28
+## [1.0.3] - 2025-12-29
+
+### 优化
+- 🗂️ 优化项目目录结构，创建 `core/` 目录存放核心代码
+- 📦 合并 `hooks/` 和 `composables/` 为统一的 `composables/` 目录
+- 🎨 重命名 `main.vue` 为 `ChatSDKApp.vue`，语��更清晰
+- 📂 移动 demo 相关文件到 `demo/` 目录
+- 📚 精简文档，删除冗余文件（BUILD.md、USAGE.md、STRUCTURE.md）
+- 📝 文档行数减少 52%（从 1697 行降至 809 行）
+
+### 变更
+- 🔧 移除不必要的工具函数导出（deepMerge、debounce、throttle、formatTimestamp、generateId）
+- 🗑️ 删除 `browser.ts` 入口文件，统一使用 `src/index.ts`
+- 📄 简化 `CONTRIBUTING.md` 和 `PUBLISH.md`
+
+---
+
+## [1.0.2] - 2025-12-29
+
+### 修复
+- 🐛 修复 UMD 构建导出问题，需使用 `ChatSDK.default` 访问类
+- 🔧 简化构建配置，ES 和 UMD 使用同一入口文件
+
+---
+
+## [1.0.1] - 2025-12-29
+
+### 修复
+- 🎨 修复第三方页面 SDK 样式不生效的问题
+- 🔨 实现 CSS 内联机制，自动将样式注入到 Shadow DOM
+- 📦 创建 `scripts/inject-css.js` 构建时自动内联 CSS
+- ⚙️ 更新 `vite.config.ts` 支持 CSS 预处理和内联
+
+---
+
+## [1.0.0] - 2025-12-29
 
 ### 新增
 - 🎉 首次发布智能客服 SDK
