@@ -46,4 +46,5 @@ try {
 
 console.log('\n✅ 版本准备完成！');
 console.log('\n下一步，执行发布命令:');
-console.log('  npm run release -- --otp=你的验证码\n');
+console.log('npm login \n');
+console.log('npm run release \n');

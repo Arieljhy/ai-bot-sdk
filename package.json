@@ -45,12 +45,11 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build:lib": "rm -rf dist && vite build --mode lib:es && vite build --mode lib:umd",
-    "format": "prettier --write \"src/**/*.{ts,vue,css,scss,less,md,json}\"",
-    "prepublishOnly": "npm run build:lib",
-    "prepack": "npm run build:lib",
+    "prep": "node scripts/prep-release.cjs",
+    "prep:minor": "node scripts/prep-release.cjs minor",
+    "prep:major": "node scripts/prep-release.cjs major",
     "release": "node scripts/release.cjs",
-    "publish:npm": "node scripts/publish.cjs",
-    "prep": "node scripts/prep-release.cjs"
+    "publish": "node scripts/publish.cjs"
   },
   "dependencies": {
     "vue": "^3.0.0"
