@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
@@ -50,7 +50,7 @@ try {
 }
 console.log('✓ 已登录\n');
 
-// 3. 发布到 npm（支持交互式输入 OTP）
+// 3. 发布到 npm（支持 WebAuth 浏览器认证和 OTP）
 const publishWithRetry = async () => {
   let retries = 0;
   const maxRetries = 3;
@@ -59,27 +59,43 @@ const publishWithRetry = async () => {
     try {
       console.log('尝试发布到 npm...');
 
-      if (retries > 0) {
-        // 提示用户输入 OTP
-        const otp = await new Promise((resolve) => {
-          rl.question('\n🔐 请输入 npm 发送的 OTP 验证码: ', (answer) => {
-            resolve(answer.trim());
-          });
-        });
+      // 使用 spawn 来处理交互式输出
+      const npmPublish = spawn('npm', ['publish', '--access', 'public'], {
+        stdio: ['pipe', 'pipe', 'inherit']
+      });
 
-        execSync(`npm publish --access public --otp=${otp}`, {
-          stdio: 'inherit'
-        });
+      // 监听 stdout
+      npmPublish.stdout.on('data', (data) => {
+        const output = data.toString();
+        process.stdout.write(output);
+
+        // 检测 WebAuth 认证链接
+        const authMatch = output.match(/https:\/\/www\.npmjs\.com\/auth\/cli\/[a-f0-9-]+/);
+        if (authMatch) {
+          console.log('\n🔐 检测到浏览器认证链接');
+        }
+
+        // 检测是否需要按回车打开浏览器
+        if (output.includes('Press ENTER to open in the browser')) {
+          console.log('正在打开浏览器...');
+
+          // 自动按回车打开浏览器
+          npmPublish.stdin.write('\n');
+        }
+      });
+
+      // 等待进程结束
+      const exitCode = await new Promise((resolve) => {
+        npmPublish.on('close', resolve);
+      });
+
+      if (exitCode === 0) {
+        console.log('\n✓ npm 发布成功\n');
+        rl.close();
+        return true;
       } else {
-        // 第一次尝试不使用 OTP
-        execSync('npm publish --access public', {
-          stdio: 'inherit'
-        });
+        throw new Error(`npm publish exited with code ${exitCode}`);
       }
-
-      console.log('\n✓ npm 发布成功\n');
-      rl.close();
-      return true;
     } catch (error) {
       retries++;
       if (retries >= maxRetries) {
@@ -89,7 +105,21 @@ const publishWithRetry = async () => {
       }
 
       console.error(`\n⚠️  发布失败（第 ${retries} 次尝试）`);
-      console.log('💡 如果提示需要 OTP 验证码，请检查 npm 发送的邮件或验证器应用\n');
+
+      // 提示用户输入 OTP
+      const otp = await new Promise((resolve) => {
+        rl.question('\n🔐 请输入 npm 发送的 OTP 验证码: ', (answer) => {
+          resolve(answer.trim());
+        });
+      });
+
+      execSync(`npm publish --access public --otp=${otp}`, {
+        stdio: 'inherit'
+      });
+
+      console.log('\n✓ npm ��布成功\n');
+      rl.close();
+      return true;
     }
   }
 };
