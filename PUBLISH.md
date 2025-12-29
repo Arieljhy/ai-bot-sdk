@@ -7,27 +7,27 @@
 ### 发布补丁版本（修复 bug）
 
 ```bash
-# 自动更新 CHANGELOG
-npm run release -m "修复样式问题"
+# 自动更新 CHANGELOG（注意需要 -- 分隔符）
+npm run release -- -m "修复样式问题"
 ```
 
 ### 发布次版本（新功能）
 
 ```bash
-npm run release:minor -m "新增XXX功能"
+npm run release:minor -- -m "新增XXX功能"
 ```
 
 ### 发布主版本（破坏性变更）
 
 ```bash
-npm run release:major -m "重构API"
+npm run release:major -- -m "重构API"
 ```
 
 ### 多行 CHANGELOG
 
 ```bash
 # 使用 \n 分隔多条
-npm run release -m "修复样式问题\n优化构建性能"
+npm run release -- -m "修复样式问题\n优化构建性能"
 ```
 
 ### 不带消息发布
