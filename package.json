@@ -1,6 +1,6 @@
 {
   "name": "@ariel_jhy/ai-bot-adk",
-  "version": "1.0.6",
+  "version": "1.0.5",
   "type": "module",
   "description": "智能客服SDK - 基于Vue 3的移动端H5智能客服组件",
   "author": "",

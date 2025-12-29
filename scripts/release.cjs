@@ -44,14 +44,14 @@ console.log(`📦 发布 ${versionType} 版本...${message ? ` (changelog: ${mes
 // 发布流程
 const steps = [
   { cmd: `npm version ${versionType} -m "chore(release): %s"`, msg: '更新版本号' },
-  { cmd: 'npm publish --access public', msg: '发布到 npm', env: {} },
+  { cmd: 'npm publish --access public', msg: '发布到 npm' },
   { cmd: 'git push && git push --tags', msg: '推送到远程' }
 ];
 
 for (const step of steps) {
   console.log(`  ${step.msg}...`);
   try {
-    execSync(step.cmd, { stdio: 'inherit', env: step.env || env });
+    execSync(step.cmd, { stdio: 'inherit', env });
   } catch (error) {
     console.error(`❌ ${step.msg}失败`);
     process.exit(1);
