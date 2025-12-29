@@ -488,3 +488,6 @@ export class ChatSDK {
     Object.assign(this.config, deepMerge(this.config, config))
   }
 }
+
+// 导出类型
+export type { ChatSDKConfig, ChatMessage, QuickQuestion }
