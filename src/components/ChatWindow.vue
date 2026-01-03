@@ -12,7 +12,7 @@
       <div class="cs-messages-container" ref="messagesContainer">
         <!-- 欢迎消息和推荐问题 - 始终显示 -->
         <WelcomeSection
-          :welcome-message="config.welcomeMessage || 'Hi，我是智能客服'"
+          :welcome-message="config.welcomeMessage || 'Hi，我是���能客服'"
           :quick-questions="displayedQuestions"
           :show-welcome="messages.length === 0"
           @ask-question="handleAskQuestion"
@@ -43,6 +43,9 @@
         :disabled="isLoading"
         @send="handleSendMessage"
       />
+
+      <!-- Toast 提示组件 - 在窗口内部居中 -->
+      <Toast :toast="toast || null" />
     </div>
   </Transition>
 </template>
@@ -54,16 +57,22 @@ import WelcomeSection from './WelcomeSection.vue'
 import MessagesList from './MessagesList.vue'
 import MessageInput from './MessageInput.vue'
 import QuickQuestions from './QuickQuestions.vue'
+import Toast from './Toast/index.vue'
 import { useQuickQuestions } from '../hooks/useQuickQuestions'
-import { useStreamingChat } from '../hooks/useStreamingChat'
+import { useSSE } from '../hooks/useSSE'
 import { useScrollPosition } from '../hooks/useScrollPosition'
-import type { ChatSDKConfig, ChatMessage, QuickQuestion } from '../types'
+import { useToast } from '../hooks/useToast'
+import type { ChatSDKConfig, ChatMessage, QuickQuestion, ToastOptions } from '../types'
+
+// 初始化 Toast
+const { show } = useToast()
 
 interface Props {
   isOpen: boolean
   config: ChatSDKConfig
   messages: ChatMessage[]
   isLoading?: boolean
+  toast?: ToastOptions | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -96,12 +105,9 @@ const {
   refreshQuestions,
 } = useQuickQuestions(props.config.quickQuestions || [])
 
-// 流式聊天管理
-const {
-  streamingMessageId,
-  streamingContent,
-  startStreamingChat,
-} = useStreamingChat(props.config)
+// SSE 流式聊天管理
+const streamingMessageId = ref<string>()
+const { content: streamingContent, start: startSSE, reset: resetSSE } = useSSE()
 
 // 滚动位置管理
 const {
@@ -136,14 +142,47 @@ const handleRefreshQuestions = () => {
   refreshQuestions()
 }
 
+// 启动流式聊天
+const startStreamingChat = async (userMessage: string, onComplete?: (messageId: string, content: string) => void) => {
+  // 重置状态
+  resetSSE()
+
+  // 创建新的 AI 消息 ID
+  streamingMessageId.value = Date.now().toString()
+
+  // 开始 SSE 流式请求
+  await startSSE({
+    url: props.config.sseUrl || 'http://localhost:3000/sse',
+    method: props.config.sseMethod || 'POST',
+    body: {
+      message: userMessage,
+      history: []
+    },
+    onComplete: () => {
+      if (streamingMessageId.value && streamingContent.value) {
+        onComplete?.(streamingMessageId.value, streamingContent.value)
+        resetScrollPosition()
+      }
+      // 清空流式状态
+      streamingMessageId.value = undefined
+    },
+    onError: (error: Error) => {
+      console.error('SSE 错误:', error)
+      show(error.message || '发生错误，请重试')
+      if (streamingMessageId.value) {
+        onComplete?.(streamingMessageId.value, `错误：${error.message}`)
+        resetScrollPosition()
+      }
+      streamingMessageId.value = undefined
+    }
+  })
+}
+
 // 处理提问
 const handleAskQuestion = (question: QuickQuestion) => {
   emit('askQuestion', question)
-  startStreamingChat(question.text, {
-    onComplete: (messageId, content) => {
-      emit('streamingComplete', messageId, content)
-      resetScrollPosition()
-    }
+  startStreamingChat(question.text, (messageId, content) => {
+    emit('streamingComplete', messageId, content)
   })
 }
 
@@ -155,11 +194,8 @@ const handleFeedback = (messageId: string, type: 'like' | 'dislike' | null) => {
 // 处理发送消息
 const handleSendMessage = (content: string) => {
   emit('sendMessage', content)
-  startStreamingChat(content, {
-    onComplete: (messageId, content) => {
-      emit('streamingComplete', messageId, content)
-      resetScrollPosition()
-    }
+  startStreamingChat(content, (messageId, content) => {
+    emit('streamingComplete', messageId, content)
   })
 }
 

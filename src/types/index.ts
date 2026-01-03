@@ -22,6 +22,11 @@ export interface QuickQuestion {
   icon?: string
 }
 
+export interface ToastOptions {
+  message: string
+  duration?: number
+}
+
 export interface ChatSDKConfig {
   // API 配置
   apiBaseUrl?: string

@@ -1,10 +1,10 @@
 <template>
-  <!-- 聊天窗口 -->
   <ChatWindow
     :is-open="sdk.isOpen.value"
     :config="sdk.config"
     :messages="sdk.messages.value"
     :is-loading="sdk.isLoading.value"
+    :toast="toast"
     @close="sdk.close()"
     @send-message="sdk.handleSendMessage($event)"
     @ask-question="sdk.handleAskQuestion($event)"
@@ -17,6 +17,7 @@
 import type { PropType } from 'vue'
 import ChatWindow from './ChatWindow.vue'
 import type { ChatSDK } from '../core/ChatSDK'
+import { globalToastRef } from '@/hooks/useToast'
 
 defineProps({
   sdk: {
@@ -24,6 +25,9 @@ defineProps({
     required: true,
   },
 })
+
+// 使用全局 toast ref（组件和 API 层共享）
+const toast = globalToastRef
 </script>
 
 <style scoped>

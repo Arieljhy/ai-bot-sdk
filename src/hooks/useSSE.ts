@@ -1,11 +1,14 @@
 /**
- * 支持打字机效果的 SSE Hook
+ * 支持 fetch 的 SSE Hook
+ * 使用原生 fetch API 处理流式响应
+ * 使用 requestAnimationFrame 优化渲染性能，减少重排
  * @param options SSE 配置选项
  * @returns SSE 相关的状态和方法
  */
 
 import { ref, onUnmounted, type Ref } from "vue";
-import type { SSEData, UseSSEOptions, UseSSEReturn } from "./interface";
+import type { UseSSEOptions, UseSSEReturn } from "./interface";
+import { extractContent, parseSSELine } from "@/utils/sseParser";
 
 export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
   const content = ref<string>("");
@@ -13,77 +16,7 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
   const error = ref<Error | null>(null);
 
   let controller: AbortController | null = null;
-  let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
   let defaultOptions = options;
-
-  /**
-   * 提取大模型返回的内容
-   */
-  const extractContent = (data: SSEData): string => {
-    // OpenAI 格式
-    if (typeof data === "object" && data !== null) {
-      if ("choices" in data && data.choices?.[0]?.delta?.content) {
-        return data.choices[0].delta.content;
-      }
-      // Claude 格式
-      if ("delta" in data && data.delta?.text) {
-        return data.delta.text;
-      }
-      // 通用格式
-      if ("content" in data && typeof data.content === "string") {
-        return data.content;
-      }
-    }
-
-    // 纯文本格式
-    if (typeof data === "string") {
-      return data;
-    }
-
-    return "";
-  };
-
-  /**
-   * 处理 SSE 数据
-   */
-  const processSSEData = (line: string, onMessage?: (chunk: string) => void): string => {
-    if (!line.trim()) return "";
-
-    // SSE 格式: data: {...} 或 data: text
-    if (line.startsWith("data: ")) {
-      const data = line.slice(6).trim();
-
-      // 处理结束标记
-      if (data === "[DONE]") {
-        return "";
-      }
-
-      try {
-        const parsed = JSON.parse(data);
-        // 提取实际内容
-        const chunk = extractContent(parsed);
-        if (chunk) {
-          // 累积内容（打字机效果的关键）
-          content.value += chunk;
-          onMessage?.(chunk);
-        }
-        return chunk;
-      } catch (e) {
-        // 非 JSON 格式,直接使用原始数据（单个字符或文本）
-        if (data) {
-          content.value += data;
-          onMessage?.(data);
-          return data;
-        }
-        return "";
-      }
-    }
-    // 处理 event: 行（忽略）
-    if (line.startsWith("event: ")) {
-      return "";
-    }
-    return "";
-  };
 
   /**
    * 开始 SSE 连接
@@ -92,7 +25,7 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
     // 合并配置
     const finalOptions = { ...defaultOptions, ...overrideOptions };
     const {
-      url = "http://localhost:3000/sse",
+      url = "",
       method = "POST",
       headers = {},
       body,
@@ -113,7 +46,28 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
     // 创建 AbortController
     controller = new AbortController();
 
+    // 渲染优化：使用 requestAnimationFrame 批量更新
+    let pendingContent = "";
+    let rafId: number | null = null;
+    let isUpdateScheduled = false;
+
+    const scheduleUpdate = () => {
+      if (!isUpdateScheduled) {
+        isUpdateScheduled = true;
+        rafId = requestAnimationFrame(() => {
+          // 批量更新内容
+          if (pendingContent) {
+            content.value += pendingContent;
+            pendingContent = "";
+          }
+          isUpdateScheduled = false;
+          rafId = null;
+        });
+      }
+    };
+
     try {
+      // 使用原生 fetch API 发送请求
       const response = await fetch(url, {
         method,
         headers: {
@@ -134,7 +88,7 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
         throw new Error("无法获取 ReadableStream");
       }
 
-      reader = response.body.getReader();
+      const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
@@ -146,9 +100,27 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
           if (buffer.trim()) {
             const lines = buffer.split("\n");
             for (const line of lines) {
-              processSSEData(line, onMessage);
+              const parsed = parseSSELine(line);
+              if (parsed) {
+                const chunk = extractContent(parsed);
+                if (chunk) {
+                  // 累积到缓冲区
+                  pendingContent += chunk;
+                  onMessage?.(chunk);
+                }
+              }
             }
           }
+
+          // 最后一次更新
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+          }
+          if (pendingContent) {
+            content.value += pendingContent;
+            pendingContent = "";
+          }
+
           isLoading.value = false;
           onComplete?.();
           break;
@@ -164,13 +136,43 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
 
         for (const line of lines) {
           if (line.trim()) {
-            processSSEData(line, onMessage);
+            const parsed = parseSSELine(line);
+            if (parsed) {
+              // 检查是否是结束标记
+              if (parsed === "[DONE]") {
+                // 最后一次更新
+                if (rafId) {
+                  cancelAnimationFrame(rafId);
+                }
+                if (pendingContent) {
+                  content.value += pendingContent;
+                  pendingContent = "";
+                }
+                isLoading.value = false;
+                onComplete?.();
+                return;
+              }
+
+              // 提取实际内容
+              const chunk = extractContent(parsed);
+              if (chunk) {
+                // 累积到缓冲区，等待 RAF 批量更新
+                pendingContent += chunk;
+                onMessage?.(chunk);
+                scheduleUpdate();
+              }
+            }
           }
         }
       }
     } catch (err: any) {
+      // 清理未执行的 RAF
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+      }
+
       // 忽略主动中止的错误
-      if (err.name === "AbortError") {
+      if (err.name === "AbortError" || err.message?.includes("cancel")) {
         isLoading.value = false;
         return;
       }
@@ -181,7 +183,6 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
       onError?.(errorObj);
       throw errorObj;
     } finally {
-      reader = null;
       controller = null;
     }
   };
@@ -193,11 +194,6 @@ export function useSSE(options: UseSSEOptions = {}): UseSSEReturn {
     if (controller) {
       controller.abort();
       controller = null;
-    }
-
-    if (reader) {
-      reader.cancel();
-      reader = null;
     }
 
     isLoading.value = false;
